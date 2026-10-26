@@ -1,0 +1,16 @@
+apiVersion: iaap.tcs/v1alpha1
+kind: ManagedLinuxVM
+
+metadata:
+  instanceId: vm-12345678
+  name: sample-app-dev-01
+  ownerTeam: pilot-team-1
+  costCenter: CC-1001
+
+spec:
+  productRelease: managed-linux-vm-1.0
+  environment: dev
+  size: S
+  networkProfile: private-app
+  accessGroup: pilot-team-1-developers
+  expiryDate: 2026-12-31
