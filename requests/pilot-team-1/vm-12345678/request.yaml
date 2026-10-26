@@ -9,7 +9,7 @@ metadata:
 
 spec:
   productRelease: managed-linux-vm-1.0
-  environment: dev
+  environment: prod
   size: S
   networkProfile: private-app
   accessGroup: pilot-team-1-developers
