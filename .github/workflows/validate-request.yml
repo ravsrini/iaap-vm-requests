@@ -1,0 +1,96 @@
+name: Validate VM request
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-request:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Install Python YAML library
+        run: pip install pyyaml
+
+      - name: Validate request fields
+        run: |
+          python - <<'PYTHON'
+          import glob
+          import sys
+          import yaml
+
+          errors = []
+
+          for filename in glob.glob("requests/*/*/request.yaml"):
+              with open(filename) as file:
+                  request = yaml.safe_load(file)
+
+              metadata = request.get("metadata", {})
+              spec = request.get("spec", {})
+
+              required_metadata = [
+                  "instanceId",
+                  "name",
+                  "ownerTeam",
+                  "costCenter"
+              ]
+
+              required_spec = [
+                  "productRelease",
+                  "environment",
+                  "size",
+                  "networkProfile",
+                  "accessGroup",
+                  "expiryDate"
+              ]
+
+              for field in required_metadata:
+                  if not metadata.get(field):
+                      errors.append(
+                          f"{filename}: metadata.{field} is required"
+                      )
+
+              for field in required_spec:
+                  if not spec.get(field):
+                      errors.append(
+                          f"{filename}: spec.{field} is required"
+                      )
+
+              if spec.get("environment") not in ["sandbox", "dev"]:
+                  errors.append(
+                      f"{filename}: environment must be sandbox or dev"
+                  )
+
+              if spec.get("size") != "S":
+                  errors.append(
+                      f"{filename}: Stage 1 supports size S only"
+                  )
+
+              if spec.get("networkProfile") != "private-app":
+                  errors.append(
+                      f"{filename}: networkProfile must be private-app"
+                  )
+
+              if (
+                  spec.get("productRelease")
+                  != "managed-linux-vm-1.0"
+              ):
+                  errors.append(
+                      f"{filename}: unapproved product release"
+                  )
+
+          if errors:
+              print("REQUEST VALIDATION FAILED")
+              for error in errors:
+                  print(f"- {error}")
+              sys.exit(1)
+
+          print("All VM requests are valid.")
+          PYTHON
